@@ -10,6 +10,7 @@ function qplot(q, goal, origin, path, traj)
     
     % plot bot
     plot(q(1), q(2), 'pg')
+    plot(q(1), q(2), 'og')
     
     % plot goal
     plot(goal(1), goal(2), 'pk')
@@ -22,7 +23,7 @@ function qplot(q, goal, origin, path, traj)
     plot(path(:,1), path(:,2), 'r*')
     
     % plot traj
-    plot(traj(:,1), traj(:,2), 'b.');
+    plot(traj(:,1), traj(:,2), 'b--');
     
 %     legend('path', 'goal', 'start')
     hold off

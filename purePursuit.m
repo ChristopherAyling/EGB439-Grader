@@ -8,13 +8,17 @@ function vw = purePursuit(goal, q, d, dt, first)
 % Return:
 %  vw is a 1x2 vector containing the request velocity and turn rate of the robot [v, omega]
     persistent ei
+    persistent aei
     if first
         ei = 0;
+        aei = 0;
     end
     
     KVp = 1;
     KVi = 0.1;
-    KHp = 8;
+    
+    KHp = 7;
+    KHi = 0.2;
     
     % decontsruct args
     x = q(1);
@@ -29,18 +33,27 @@ function vw = purePursuit(goal, q, d, dt, first)
     ydiff = gy-y;
     agoal = atan2(ydiff, xdiff);
     
-    derror = sqrt(xdiff^2 + ydiff^2) - d;
+    derror = sqrt(xdiff^2 + ydiff^2) - d-0.02;
     aerror = wrapToPi(agoal - theta);
     
-    % calculate velocity
+    % calculate integrals
     ei = ei + dt*derror;
+    aei = aei + dt*aerror;
+    
+    % clip integrals
     if ei > 1
-        ei = 0.6;
+        ei = 0.3;
     end
+    
+    if aei > 1
+        aei = 0.1;
+    end
+    
+    % calculate velocity
     v = KVp * derror + KVi*ei;
     
     % calculate angular velocity
-    w = KHp * aerror + KVi*ei;
+    w = KHp * aerror;
     
     % deal with janky persistant variables
     if isempty(v)
@@ -49,6 +62,13 @@ function vw = purePursuit(goal, q, d, dt, first)
         v = v(1);
     end
     
+    if isempty(w)
+    w = 0;
+    else
+        w = w(1);
+    end
+    
+    % clip linear and angular velocities
     vmin = -0.5;
     vmax = 0.5;
     wmin = -1;

@@ -1,15 +1,16 @@
 load('purepursuit.mat');
+% robot_traj = [robot_traj; robot_traj]
 
 goalCounter = 1;
 goal = robot_traj(goalCounter, :);
 
-q0 = [0, 0, 0];
-q = [0 0 0];
+q0 = [-0, -0, 0];
+q = [q0(1) q0(2) 0];
 
 x = [q0(1)];
 y = [q0(2)];
 
-dt = 0.2;
+dt = 0.25;
 d = 0.1;
 first = true;
 
@@ -39,5 +40,5 @@ for i=1:STEPS
        goal = robot_traj(goalCounter, :);
 %        first = true;
     end
-    pause(0.02);
+    pause(0.0001);
 end
