@@ -5,16 +5,25 @@ function myFunction(q0, sensorFunction)
     % eg. sensors = sensorFunction( q )
     % where sensors is a 2x1 vector containing the left and right sensor readings
     
-    q = q0';
-    qs = [q];
+    q = q0;
+    qs = [q0];
     sensorVals = sensorFunction(q0);
     
-    % loop through while still under 0.99
+    i = 0;
+    % loop through wile still under 0.99
     while (sum(sensorVals < 0.99) == 2)
-        q = qupdate(q, 1 - sensorVals)';
+        q = qupdate(q);
         qs = [qs; q];
+        
         sensorVals = sensorFunction(q);
+        i = i + 1;
     end
-    qs
-    plot(qs(:,1), qs(:,2), 'r-*')
+        %get sensor vals
+        %qupdate
+    
+    % sensors = sensorFunction(q)
+    % compute wheel speeds
+    % q = qupdate(q, speeds)
+    
+    % plot()
 end
