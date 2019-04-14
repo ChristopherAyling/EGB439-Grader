@@ -37,7 +37,7 @@ function in = qcontains(list, nodeid)
     %
     % Output:
     %   in (logical)
-    in = any(list == nodeid);
+    in = sum(list == nodeid) > 0
 end
 
 function [newlist,nodeid] = qpop(list)
@@ -50,13 +50,8 @@ function [newlist,nodeid] = qpop(list)
     % Output:
     %   newlist (vector)
     %   nodeid  (scalar)
-    if isempty(list)
-       newlist = [];
-       nodeid = [];
-    else
-        newlist = list(2:end);
-        nodeid = list(1);
-    end
+    newlist = list(2:end)
+    nodeid = list(1)
 end
 
 function [newlist,nodeid] = qinsert(list, nodeid, cost)
@@ -74,18 +69,7 @@ function [newlist,nodeid] = qinsert(list, nodeid, cost)
     %
     % Output:
     %   newlist (vector)
-    for i = 1:length(list)
-        if cost(nodeid) < cost(list(i))
-            if (i == 1)
-                newlist = [nodeid, list];
-                return
-            else
-                newlist = [list(1:i-1), nodeid, list(i:end)];
-                return
-            end
-        end
-    end
-    newlist = [list, nodeid];
+    
 end
 
 function nodeid = neighbours(distanceMatrix, nodeid)
@@ -97,6 +81,4 @@ function nodeid = neighbours(distanceMatrix, nodeid)
     %   
     % Output:
     %   nodeid   (scalar)
-    row = distanceMatrix(nodeid, :);
-    nodeid = find(row > 0);
 end

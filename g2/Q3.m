@@ -18,6 +18,12 @@ function dtransform = distanceTransform(map, goal)
     
     % compute the distance transform of map
     
+    % pad with NaNs
+    map = padarray(map, [1, 1], NaN, 'both');
+    
+    % take padding into account
+    goal = goal + 1;
+    
     % make 1s into NaNs
     map(map==1) = NaN;
     
@@ -25,7 +31,8 @@ function dtransform = distanceTransform(map, goal)
     map(map==0) = inf;
     
     % set goal to 0
-    map(goal(1), goal(2)) = 0;
+    map(goal(2), goal(1)) = 0;
+    
     
     sz = size(map);
     xlen = sz(2);
@@ -46,15 +53,18 @@ function dtransform = distanceTransform(map, goal)
     for step = 1:STEPS
         for i=is
             for j=js
-                if isnan(map(i, j))
+                if isnan(map(j, i))
                    continue 
                 end
                 W = window(map, j, i);
                 cost = calcCost(W, kernel);
-                map(i, j) = cost;
+                map(j, i) = cost;
             end
         end
     end
+    
+    % remove padding
+    map = map(2:end-1, 2:end-1);
     
     dtransform = map;
 end
@@ -77,16 +87,38 @@ function path = findPath(map, start, goal)
     % from the starting point, move to the adjacent cell that's closest to
     % the goal
     path = [sx, sy];
-    while path(end, :) ~= goal
-       current = path(end, :)
-       cx = current(1);
-       cy = current(2);
-       next = minval(window(map, cx, cy));
-       path = [path, next];
+    timeout = 0;
+    while true
+        timeout = timeout + 1;
+        current = path(end, :);
+        cx = current(1);
+        cy = current(2);
+        % get next step direction
+        W = window(padarray(dtrans, [1, 1], NaN, 'both'), cy+1, cx+1);
+        
+        % visualise
+%         monitor(dtrans, W, map, cx, cy)
+       
+        nextStep = minval(W);
+
+        % get next step coord
+        next = [cx, cy] + nextStep;
+
+        % add to path
+        path = [path; next];
+
+        % check if done
+        if path(end, :) == goal
+          break 
+        end
+
+        % stop infinite loop
+        if timeout > 1000
+           path
+           qwerty = 'timed out!'
+           break
+        end
     end
-    
-    % compute the best path 
-    path = -1;
 end
 
 function cost = calcCost(W, kernel)
@@ -115,18 +147,18 @@ function M = window(A, x, y)
     ys = wy-1;
     ye = wy+1;
     
-    if ys == 0
+    if ys < 1
         ys = 1;
     end
-    if xs == 0
+    if xs < 1
         xs = 1;
     end
-    if ye == 129
-        ye = 128;
-    end
-    if xe == 129
-        xe = 128;
-    end
+%     if ye == 129
+%         ye = 128;
+%     end
+%     if xe == 129
+%         xe = 128;
+%     end
     
     xmin = 2;
     ymin = 2;
@@ -144,7 +176,7 @@ function M = window(A, x, y)
     if (isOutOfBounds)
         M = [];
     else
-        M = A(ys:ye,xs:xe);
+        M = A(xs:xe, ys:ye);
         msz = size(M);
         base(1:msz(1), 1:msz(2)) = M;
         M = base;
@@ -168,8 +200,34 @@ function next = minval(M)
       1, 0;
       1, 1;
     ];
+    mask = [
+        inf 0 inf;
+        0 0 0;
+        inf 0 inf;
+    ];
+    M = mask + M;
     smallest = min(min(M));
     idx = find(M==smallest);
     loc = lookup(idx, :);
-    next = loc;
+    if size(loc, 1) > 1 % if multiple closest
+        next = loc(1, :); % get the first
+    else
+        next = loc;
+    end
+end
+
+function monitor(dt, w, map, x, y)
+    figure(1)
+    subplot(3,1,1), image(map,'CDataMapping','scaled')
+    hold on
+    plot(x, y, 'rp')
+    colorbar
+    axis square
+    subplot(3,1,2), image(dt,'CDataMapping','scaled')
+    colorbar
+    axis square
+    subplot(3,1,3), image(w,'CDataMapping','scaled')
+    colorbar
+    axis square
+    hold off
 end

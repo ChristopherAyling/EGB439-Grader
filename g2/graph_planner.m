@@ -36,6 +36,10 @@ function [path,frontierList,exploredList] = graph_planner(distanceMatrix, placeC
         % we are done with this node now, add it to the explored list
         exploredList = qappend(exploredList, expandingNode);
         fprintf('  adding node %d %s to explored list\n', expandingNode, placeNames{expandingNode});
+        
+        % visualise
+%         townPlot(frontierList, exploredList)
+%         pause(0.5)
     end
     
     % Now we need to reconstruct the path.  For each node we record it's parent
