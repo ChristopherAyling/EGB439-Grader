@@ -2,7 +2,7 @@ num_steps = 35;
 init(num_steps);
 % x_mu is the mean of the probability normal distribution of 
 % the robot initial position at time t =0. 
-x_mu     = 0; 
+x_mu = 0; 
 % x_sigma is the standard deviation of the normal distribution
 %of the robot position.
 x_sigma = 0.15; % 15 cm
@@ -18,17 +18,28 @@ trajectory_sigma = [];
 for t = 1:num_steps    
     [x_mu_predict, x_sigma_predict]= predict_step(x_mu,x_sigma,step,step_sigma);
     % use the function read_range to read a measurement at the current time step 
-    z = read_range(t);
+    z = read_range(t); % return a scalar (distance from wall)
+    
     [x_mu,x_sigma] = update_step(x_mu_predict, x_sigma_predict,z,z_sigma);  
+    
     trajectory = [trajectory, x_mu];
+    
     trajectory_sigma = [trajectory_sigma,x_sigma];
 end
 
 
 function [x_mu,x_sigma] = predict_step(x_mu,x_sigma,step_length,step_sigma)
-
+    A = 1; 
+    B = 1;
+    u = step_length;
+    x_mu = A*x_mu + B*u;
+    x_sigma = A*x_sigma*A';
 end
 
 function [x_mu,x_sigma] = update_step(x_mu,x_sigma,z,z_sigma)
-
+    H = 1;
+    K = 1;
+    I = eye(1);
+    x_mu = x_mu + K * (z-H*x_mu);
+    x_sigma = (I - K*H) * x_sigma;
 end
