@@ -31,8 +31,9 @@ function [output] = myFunction(mode)
         
                 [x,S] = update_step(map,z,x,S,Q);    
                 
-                plot_cov(x,S,3);     
-                plot_robot(x,15)
+                plot_cov(x,S,3);   
+                plot(x(1), x(2), 'r.')
+%                 plot_robot(x,15)
             end
             output = [x,S];
         case 1
@@ -63,8 +64,8 @@ y = xt(2);
 theta = xt(3);
 
 xt = [
-    x+(d*cos(dth));
-    y+(d*sin(dth));
+    x+(d*cos(theta));
+    y+(d*sin(theta));
     wrapToPi(theta+dth);
 ];
     
@@ -82,8 +83,6 @@ Ju = [
 
 S = Jx*S*Jx' + Ju*R*Ju';
     
-    
-    
 end
 
    
@@ -95,11 +94,11 @@ end
 %
 % The function performs an update step of the EKF localiser and returns the mean and covariance of the robot. 
 function [x,S] = update_step(map,z,x,S,Q)
-xr = x(1);
-yr = x(2);
-theta = x(3);
 
-for i=1:length(map)
+for i=1:size(z,1)
+    xr = x(1);
+    yr = x(2);
+    theta = x(3);
     lm = map(i,:);
     
     r = z(i, 1);
@@ -109,23 +108,24 @@ for i=1:length(map)
     yl = lm(2);
     
     G = [
-        -(xl-xr)/r -(yl-yr)/r 0;
-        (yl-yr)/(r*r) -(xl-xr)/(r*r) -1;
+        -(xl-xr)/r, -(yl-yr)/r, 0;
+        (yl-yr)/(r*r), -(xl-xr)/(r*r), -1;
     ];
     
     h = [
-        sqrt((xl+xr)^2+(yl+yr)^2)
+        sqrt((xl-xr)^2+(yl-yr)^2)
         wrapToPi(atan2(yl-yr, xl-xr)-theta)
-    ]';
+    ];
     
     K = S*G'*(G*S*G' + Q)^-1;
     
-    x = x + K*(z(i, :)-h)';
+    err = z(i, :)-h';
+    err = [err(1); wrapToPi(err(2))];
+    x = x + K*(err);
+    x = [x(1), x(2), wrapToPi(x(3))]';
     S = (eye(length(K)) - K*G)*S;
 end  
-    
-    
-    
+   
 end    
 
 % ----------------------------

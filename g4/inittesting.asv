@@ -1,7 +1,0 @@
-s = magic(10);
-ns = ones(2);
-
-zs = [];
-
-new = [
-    
