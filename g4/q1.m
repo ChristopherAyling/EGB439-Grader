@@ -31,9 +31,8 @@ function [output] = myFunction(mode)
         
                 [x,S] = update_step(map,z,x,S,Q);    
                 
-                plot_cov(x,S,3);   
-                plot(x(1), x(2), 'r.')
-%                 plot_robot(x,15)
+                plot_cov(x,S,3);     
+                plot_robot(x,15)
             end
             output = [x,S];
         case 1
@@ -81,7 +80,7 @@ Ju = [
     0 1;
 ];
 
-S = Jx*S*Jx' + Ju*R*Ju';
+S = Jx*S*Jx' + Ju*R*Ju'; 
     
 end
 
@@ -124,8 +123,8 @@ for i=1:size(z,1)
     x = x + K*(err);
     x = [x(1), x(2), wrapToPi(x(3))]';
     S = (eye(length(K)) - K*G)*S;
-end  
-   
+end
+
 end    
 
 % ----------------------------

@@ -143,10 +143,18 @@ b = zi(2);
 xl = mu(landmarkID*2-1);
 yl = mu(landmarkID*2);
 
-g = [
-    -(xl-x)/r -(yl-y)/r;
-    (yl-y)/(r^2) -(xl-x)/(r^2);
+h = [
+    sqrt((xl-x)^2+(yl-y)^2)
+    wrapToPi(atan2(yl-y, xl-x)-theta)
+]';
+
+cr = h(1);
+
+g = -[
+    -(xl-x)/cr -(yl-y)/cr;
+    (yl-y)/(cr^2) -(xl-x)/(cr^2);
 ];
+
 zs = zeros(2, length(Sigma));
 G = [zs(:, 1:landmarkID*2-2) g zs(:, landmarkID*2+1:end)];
 
@@ -154,14 +162,11 @@ K = Sigma*G'*(G*Sigma*G'+Q)^-1;
 
 I = eye(length(Sigma));
 
-h = [
-    sqrt((xl+x)^2+(yl+y)^2)
-    wrapToPi(atan2(yl-y, xl-x)-theta)
-]';
-
 update = (zi-h);
+update = [update(1), wrapToPi(update(2))];
 mu = mu + K*update';
 Sigma = (I-K*G)*Sigma;
+    
     
     
 end
