@@ -130,9 +130,38 @@ end
 %      of the landmarks in the map, this function accepts the full state space
 %      and only alter the pose of the robot in it.
 function [mu,Sigma] =predict_step(mu,Sigma,d,dth,R)
-  
+x = mu(1);
+y = mu(2);
+theta = mu(3);
+
+xt = [
+    x+(d*cos(theta));
+    y+(d*sin(theta));
+    wrapToPi(theta+dth);
+];
+
+mu = [xt; mu(4:end)];
     
-    
+Jx = [
+    1 0 -d*sin(theta);
+    0 1 d*cos(theta);
+    0 0 1;
+];
+
+Ju = [
+    cos(theta) 0;
+    sin(theta) 0;
+    0 1;
+];
+
+S = Jx*Sigma(1:3, 1:3)*Jx' + Ju*R*Ju';
+
+zs = zeros(3, length(Sigma)-3);
+
+Sigma = [
+    S zs;
+    zs' Sigma(4:end, 4:end);
+];
     
     
 end
@@ -146,9 +175,33 @@ end
 % The function returns mu and Sigma after initialising (if n is the number of landmarks, the function returns mu of size (3+2n)x1 and Sigma of size (3+2n)x(3+2xn))
 % all t he landmarks
 function [mu, Sigma] = initLandmarks(z,Q,mu,Sigma)
+x = mu(1);
+y = mu(2);
+theta = mu(3);
 
+for i=1:length(z)
+    r = z(1); %TODO
+    b = z(2); %TODO
     
+    lnew = [
+        x+r*cos(theta+b);
+        y+r*sin(theta+b);
+    ]; %TODO
     
+    mu = [mu; lnew];
+    
+    zs = zeros(length(Sigma), 2);
+    
+    L = [
+        cos(theta+b) -r*sin(theta+b);
+        sin(theta+b) r*cos(theta+b);
+    ];
+    
+    Sigma = [
+        Sigma zs;
+        zs' L*Q*L';
+    ];
+end
     
 end
 
@@ -162,20 +215,34 @@ end
     % an update step using the sensor readings of
     % the landmark   
 function [mu, Sigma] = update_step(landmarkID,zi,Q,mu,Sigma)
-   
+x = mu(1);
+y = mu(2);
+theta = mu(3);
+
+xl = -1;
+yl = -1;
+
+h = [
+    sqrt((x-xl)^2 + (y-yl)^2);
+    wrapToPi(atan2(yl-r, xl-x)-theta);
+];
+zs = zeros();
+g = [];
+G = [
+    g zs;
+    zs' g;
+];
+K = Sigma*G'*inv(G*Sigma*G' + Q)
+I = eye(length(Sigma));
     
-    
-    
+err = zi-h;
+err = [err(1) wrapToPi(err(2));
+mu = mu + K*(err);
+
+Sigma = (I - K*G)*Sigma;    
     
 end
 
 
 % ----------------------------
 % write the extra functions that you need and call them in the three functions above
-
-
-
-
-
-
-
