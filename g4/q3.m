@@ -134,6 +134,8 @@ x = mu(1);
 y = mu(2);
 theta = mu(3);
 
+n = length(Sigma)-3; % number of landmarks
+
 xt = [
     x+(d*cos(theta));
     y+(d*sin(theta));
@@ -156,12 +158,13 @@ Ju = [
 
 S = Jx*Sigma(1:3, 1:3)*Jx' + Ju*R*Ju';
 
-zs = zeros(3, length(Sigma)-3);
+zs = zeros(3, n);
 
 Sigma = [
     S zs;
     zs' Sigma(4:end, 4:end);
 ];
+    
     
     
 end
@@ -175,26 +178,30 @@ end
 % The function returns mu and Sigma after initialising (if n is the number of landmarks, the function returns mu of size (3+2n)x1 and Sigma of size (3+2n)x(3+2xn))
 % all t he landmarks
 function [mu, Sigma] = initLandmarks(z,Q,mu,Sigma)
-x = mu(1);
-y = mu(2);
-theta = mu(3);
 
 for i=1:length(z)
-    r = z(1); %TODO
-    b = z(2); %TODO
+    x = mu(1);
+    y = mu(2);
+    theta = mu(3);
+    
+    r = z(i, 1);
+    b = z(i, 2);
     
     lnew = [
         x+r*cos(theta+b);
         y+r*sin(theta+b);
-    ]; %TODO
+    ];
     
-    mu = [mu; lnew];
+    mu = [
+        mu;
+        lnew;
+    ];
     
     zs = zeros(length(Sigma), 2);
     
     L = [
-        cos(theta+b) -r*sin(theta+b);
-        sin(theta+b) r*cos(theta+b);
+        cos(theta+b), -r*sin(theta+b);
+        sin(theta+b), r*cos(theta+b);
     ];
     
     Sigma = [
@@ -219,27 +226,38 @@ x = mu(1);
 y = mu(2);
 theta = mu(3);
 
-xl = -1;
-yl = -1;
+xl = mu(3 + landmarkID*2-1);
+yl = mu(3 + landmarkID*2);
 
+r = zi(1);
+b = zi(2);
 h = [
     sqrt((x-xl)^2 + (y-yl)^2);
     wrapToPi(atan2(yl-r, xl-x)-theta);
+]';
+
+cr = h(1);
+g1 = [
+    -(xl-x)/cr, -(yl-y)/cr, 0;
+    (yl-y)/(cr^2), -(xl-x)/(cr^2), -1;
 ];
-zs = zeros();
-g = [];
+g2 = -[
+    (xl-x)/cr, (yl-y)/cr;
+    -(yl-y)/(cr^2), (xl-x)/(cr^2);
+];
+zs = zeros(2, length(Sigma)-3);
 G = [
-    g zs;
-    zs' g;
+    g1 zs(:, 1:landmarkID*2-2) g2 zs(:, landmarkID*2+1:end);
 ];
-K = Sigma*G'*inv(G*Sigma*G' + Q)
+
+K = Sigma*G'*inv(G*Sigma*G' + Q);
 I = eye(length(Sigma));
     
 err = zi-h;
-err = [err(1) wrapToPi(err(2));
-mu = mu + K*(err);
+err = [err(1) wrapToPi(err(2))];
+mu = mu + K*(err');
 
-Sigma = (I - K*G)*Sigma;    
+Sigma = (I - K*G)*Sigma;  
     
 end
 
