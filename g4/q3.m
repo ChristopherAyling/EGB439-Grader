@@ -134,7 +134,7 @@ x = mu(1);
 y = mu(2);
 theta = mu(3);
 
-n = length(Sigma)-3; % number of landmarks
+n = length(Sigma)-3; % number of landmarks * 2
 
 xt = [
     x+(d*cos(theta));
@@ -145,28 +145,26 @@ xt = [
 mu = [xt; mu(4:end)];
     
 Jx = [
-    1 0 -d*sin(theta);
-    0 1 d*cos(theta);
+    1 0 -d*sin(xt(3));
+    0 1 d*cos(xt(3));
     0 0 1;
 ];
 
+Jx = [
+    Jx zeros(3, n);
+    zeros(3, n)' eye(n);
+];
+
 Ju = [
-    cos(theta) 0;
-    sin(theta) 0;
+    cos(xt(3)) 0;
+    sin(xt(3)) 0;
     0 1;
 ];
 
-S = Jx*Sigma(1:3, 1:3)*Jx' + Ju*R*Ju';
+Ju = [Ju; zeros(n, 2)];
 
-zs = zeros(3, n);
+S = Jx*Sigma*Jx' + Ju*R*Ju';
 
-Sigma = [
-    S zs;
-    zs' Sigma(4:end, 4:end);
-];
-    
-    
-    
 end
 % We use the sensor readings from the first time step 
 % to initialise all the landmarks in the map. 
@@ -178,7 +176,6 @@ end
 % The function returns mu and Sigma after initialising (if n is the number of landmarks, the function returns mu of size (3+2n)x1 and Sigma of size (3+2n)x(3+2xn))
 % all t he landmarks
 function [mu, Sigma] = initLandmarks(z,Q,mu,Sigma)
-
 for i=1:length(z)
     x = mu(1);
     y = mu(2);
@@ -186,10 +183,10 @@ for i=1:length(z)
     
     r = z(i, 1);
     b = z(i, 2);
-    
+    thetaplusb = wrapToPi(theta+b);
     lnew = [
-        x+r*cos(theta+b);
-        y+r*sin(theta+b);
+        x+r*cos(thetaplusb);
+        y+r*sin(thetaplusb);
     ];
     
     mu = [
@@ -200,8 +197,8 @@ for i=1:length(z)
     zs = zeros(length(Sigma), 2);
     
     L = [
-        cos(theta+b), -r*sin(theta+b);
-        sin(theta+b), r*cos(theta+b);
+        cos(thetaplusb), -r*sin(thetaplusb);
+        sin(thetaplusb), r*cos(thetaplusb);
     ];
     
     Sigma = [
@@ -209,6 +206,8 @@ for i=1:length(z)
         zs' L*Q*L';
     ];
 end
+    
+    
     
 end
 
@@ -241,7 +240,7 @@ g1 = [
     -(xl-x)/cr, -(yl-y)/cr, 0;
     (yl-y)/(cr^2), -(xl-x)/(cr^2), -1;
 ];
-g2 = -[
+g2 = [
     (xl-x)/cr, (yl-y)/cr;
     -(yl-y)/(cr^2), (xl-x)/(cr^2);
 ];
@@ -254,13 +253,23 @@ K = Sigma*G'*inv(G*Sigma*G' + Q);
 I = eye(length(Sigma));
     
 err = zi-h;
-err = [err(1) wrapToPi(err(2))];
-mu = mu + K*(err');
+err = [err(1) wrapToPi(err(2))]';
+mu = mu + K*(err);
 
-Sigma = (I - K*G)*Sigma;  
+Sigma = (I - K*G)*Sigma; 
+    
+    
+    
     
 end
 
 
 % ----------------------------
 % write the extra functions that you need and call them in the three functions above
+
+
+
+
+
+
+
