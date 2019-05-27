@@ -163,7 +163,7 @@ Ju = [
 
 Ju = [Ju; zeros(n, 2)];
 
-S = Jx*Sigma*Jx' + Ju*R*Ju';
+Sigma = Jx*Sigma*Jx' + Ju*R*Ju';
 
 end
 % We use the sensor readings from the first time step 
@@ -232,7 +232,7 @@ r = zi(1);
 b = zi(2);
 h = [
     sqrt((x-xl)^2 + (y-yl)^2);
-    wrapToPi(atan2(yl-r, xl-x)-theta);
+    wrapToPi(atan2(yl-y, xl-x)-theta);
 ]';
 
 cr = h(1);
@@ -257,19 +257,10 @@ err = [err(1) wrapToPi(err(2))]';
 mu = mu + K*(err);
 
 Sigma = (I - K*G)*Sigma; 
-    
-    
-    
-    
 end
 
 
 % ----------------------------
 % write the extra functions that you need and call them in the three functions above
-
-
-
-
-
 
 
